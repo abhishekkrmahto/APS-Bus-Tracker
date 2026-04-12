@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import logo from '../assets/APS_LOGO.png'
 
-const DriverDashboard = () => {
+const ParentDashBoard = () => {
   const [location, setLocation] = useState({ lat: null, lng: null });
   const [error, setError] = useState(null);
 
@@ -11,8 +11,9 @@ const DriverDashboard = () => {
     id: "APS-D257",
     vehicle: "TATA MAGIC",
     licensePlate: "JH-01-AH-2627",
-    rating: "4.0 ★",
-    status: "Active / On Duty"
+    rating: "4.0 ⭐",
+    status: "Active / On Duty",
+    phone:"9988799887"
   };
 
   useEffect(() => {
@@ -48,7 +49,7 @@ const DriverDashboard = () => {
         {/* Header */}
         <header className="mb-8 text-center">
             <img className="w-20 h-20 absolute left-10" src={logo} alt="logo" />
-          <h1 className="text-3xl font-bold text-gray-800">Driver Dashboard</h1>
+          <h1 className="text-3xl font-bold text-gray-800">Parent Dashboard</h1>
         </header>
 
         {/* Map Section */}
@@ -95,9 +96,10 @@ const DriverDashboard = () => {
             <InfoField label="License Plate" value={driverDetails.licensePlate} />
             <InfoField label="Performance Rating" value={driverDetails.rating} />
             <div className="flex flex-col">
-              <span className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Current Lat/Long</span>
+              <span className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">CONTACT</span>
               <span className="text-sm font-mono text-blue-600">
-                {location.lat ? `${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}` : "Waiting..."}
+                {/* {location.lat ? `${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}` : "Waiting..."} */}
+                {driverDetails.phone}
               </span>
             </div>
           </div>
@@ -115,4 +117,4 @@ const InfoField = ({ label, value }) => (
   </div>
 );
 
-export default DriverDashboard;
+export default ParentDashBoard;
