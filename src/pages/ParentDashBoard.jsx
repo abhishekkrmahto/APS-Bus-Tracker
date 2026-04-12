@@ -16,6 +16,14 @@ const ParentDashBoard = () => {
     phone:"9988799887"
   };
 
+  const studentDetails = {
+    name:"Basant Kumar",
+    id:"APS2025341",
+    class:"X A",
+    address:"Marang-Marcha Bagicha-Tola",
+    busId:"B-05"
+  };
+
   useEffect(() => {
     if (!navigator.geolocation) {
       setError("Geolocation is not supported by your browser");
@@ -104,6 +112,36 @@ const ParentDashBoard = () => {
             </div>
           </div>
         </div>
+
+
+        
+        {/* Student Card */}
+        <div className="bg-white rounded-2xl shadow-lg p-6 md:p-8 mt-5">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-gray-100 pb-6 mb-6 gap-4">
+            <div>
+              <h2 className="text-xl font-bold text-gray-800">Student Profile</h2>
+              <p className="text-sm text-gray-400">Assigned Vehicle Information</p>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            <InfoField label="Student Name" value={studentDetails.name} />
+            <InfoField label="Student ID" value={studentDetails.id} />
+            <InfoField label="CLASS" value={studentDetails.class} />
+            <InfoField label="BUS ID" value={studentDetails.busId} />
+            <div className="flex flex-col">
+              <span className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">ADDRESS</span>
+              <span className="text-sm font-mono text-blue-600">
+                {/* {location.lat ? `${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}` : "Waiting..."} */}
+                {studentDetails.address}
+              </span>
+            </div>
+          </div>
+        </div>
+
+
+
+
       </div>
     </div>
   );

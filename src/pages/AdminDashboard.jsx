@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import logo from '../assets/APS_LOGO.png'
 
 const AdminDashboard = () => {
   // Demo Admin Info
@@ -57,6 +58,8 @@ const AdminDashboard = () => {
         return <div className="p-4 bg-yellow-50 border border-yellow-200 rounded text-yellow-700">Reassigning drivers for Route B01 and B02.</div>;
       case 'add-student':
         return <div className="p-4 bg-green-50 border border-green-200 rounded text-green-700">Enter student ID and assign a bus route.</div>;
+    case 'driver-payment':
+        return <div className="p-4 bg-green-50 border border-green-200 rounded text-green-700">Select driver</div>;
       default:
         return <div>Select an option from the menu.</div>;
     }
@@ -68,8 +71,13 @@ const AdminDashboard = () => {
       <div style={{ width: '280px', backgroundColor: '#ffffff', borderRight: '1px solid #e5e7eb', padding: '20px' }}>
         {/* Admin Info Section */}
         <div style={{ marginBottom: '30px', paddingBottom: '20px', borderBottom: '1px solid #eee' }}>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', margin: '0' }}>{admin.name}</h2>
+          <div className="img-and-adminName flex gap-5">
+          <img className='w-12' src={logo} alt="" />
+           <div className="adim-info">
+             <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', margin: '0' }}>{admin.name}</h2>
           <p style={{ color: '#6b7280', fontSize: '0.875rem' }}>{admin.designation}</p>
+           </div>
+          </div>
         </div>
 
         {/* Options Menu */}
@@ -79,6 +87,7 @@ const AdminDashboard = () => {
           <button onClick={() => setActiveView('remove-bus')} style={buttonStyle(activeView === 'remove-bus')}>Remove Buses</button>
           <button onClick={() => setActiveView('change-driver')} style={buttonStyle(activeView === 'change-driver')}>Change Driver</button>
           <button onClick={() => setActiveView('add-student')} style={buttonStyle(activeView === 'add-student')}>Add Student</button>
+          <button onClick={() => setActiveView('driver-payment')} style={buttonStyle(activeView === 'driver-payment')}>Driver Payment</button>
         </div>
       </div>
 
