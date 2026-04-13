@@ -2,29 +2,30 @@ import React from "react";
 import logo from "../assets/APS_LOGO.png";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import LoginService from "../services/LoginService";
 
 const Login = () => {
   const [emailId, setEmailId] = useState("");
   const [password, setPassword] = useState("");
   const [showAlert, setShowAlert] = React.useState(false);
+  const [userData, setUserData] = useState(null);
   const nav = useNavigate();
 
-const signInFunction = (e) => {
-  e.preventDefault();
-  const email = emailId.toLowerCase();
+  const signInFunction = async (e) => {
+    e.preventDefault();
 
-  if (email.endsWith(".aps")) {
-    nav("/parentDashBoard");
-  } else if (email.endsWith(".admin")) {
-    nav("/adminDashBoard");
-  } else if (email.endsWith(".apsd")) {
-    nav("/driverDashBoard");
-  } else {
-    setShowAlert(true);
-    setTimeout(() => setShowAlert(false), 2000);
-  }
-};
+    const email = emailId.toLowerCase();
+    const pass = password.toLowerCase();
 
+    const response = await LoginService.login(email, pass);
+
+    if (response.success === false) {
+      setShowAlert(true);
+      setTimeout(() => setShowAlert(false), 1000);
+    } else {
+      nav("/adminDashBoard", { state: response });
+    }
+  };
 
   return (
     <div>
@@ -33,7 +34,9 @@ const signInFunction = (e) => {
           className="p-4 mb-4 text-sm text-fg-warning rounded-base bg-warning-soft bg-red-400"
           role="alert"
         >
-          <span className="font-medium bg-red-600 p-1 rounded-xl">Warning alert!</span>{" "}  
+          <span className="font-medium bg-red-600 p-1 rounded-xl">
+            Warning alert!
+          </span>{" "}
           INVALID CREDENTIALS TRY AGAIN !!
         </div>
       )}
@@ -95,10 +98,7 @@ const signInFunction = (e) => {
                 </div>
                 <button
                   onClick={(e) => {
-                    if (
-                      emailId.length === 0 ||
-                      password.length === 0
-                    ) {
+                    if (emailId.length === 0 || password.length === 0) {
                       e.preventDefault();
                       setShowAlert(true);
                       setTimeout(() => {

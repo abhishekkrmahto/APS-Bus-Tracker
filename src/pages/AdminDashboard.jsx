@@ -1,16 +1,21 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import logo from '../assets/APS_LOGO.png'
+import { useLocation } from "react-router-dom";
 
 const AdminDashboard = () => {
   // Demo Admin Info
 
   const nav = useNavigate();
+  const location = useLocation();
+  const admin = location.state;
+  console.log("reached to admin portal")
+  console.log(admin.user)
 
-  const admin = {
-    name: "Madan Mahto",
-    designation: "Chief Transport Manager"
-  };
+  // const admin = {
+  //   name: "Madan Mahto",
+  //   designation: "Chief Transport Manager"
+  // };
 
   // Demo Data for display
   const [buses] = useState([
@@ -74,8 +79,8 @@ const AdminDashboard = () => {
           <div className="img-and-adminName flex gap-5">
           <img className='w-12' src={logo} alt="" />
            <div className="adim-info">
-             <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', margin: '0' }}>{admin.name}</h2>
-          <p style={{ color: '#6b7280', fontSize: '0.875rem' }}>{admin.designation}</p>
+             <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', margin: '0' }}>{admin.user.name}</h2>
+          <p style={{ color: '#6b7280', fontSize: '0.875rem' }}>{admin.user.desigination}</p>
            </div>
           </div>
         </div>

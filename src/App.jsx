@@ -6,6 +6,7 @@ import DriverDashboard from "./pages/DriverDashboard";
 import MapComponent from "./components/MapComponent";
 import ParentDashBoard from "./pages/ParentDashBoard";
 import AdminDashboard from "./pages/AdminDashboard";
+import DemoLogin from "./demopages/DemoLogin";
 
 const App = () => {
   const { latitude, longitude, setLatitude, setLongitude } =
@@ -30,7 +31,8 @@ const App = () => {
   return (
     <div className="text-black">
       <Routes>
-        <Route path="/login" element={<Login/>}></Route>
+        <Route path="/demoLogin" element={<DemoLogin/>}></Route>
+        <Route path="/" element={<Login/>}></Route>
         <Route path="/driverDashBoard" element={<DriverDashboard/>}></Route>
         <Route path="/parentDashBoard" element={<ParentDashBoard/>}></Route>
         <Route path="/adminDashBoard" element={<AdminDashboard/>}></Route>

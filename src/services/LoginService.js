@@ -1,17 +1,49 @@
-import { useState } from "react"
-import { db } from "../firebase/firebaseConfig"
+import { getDocs, query, where } from "firebase/firestore";
 import { adminCollectionRef } from "../firebase/firebaseConfig";
-import { collection,getDoc,getDocs } from "firebase/firestore";
-class LoginService{
-    login = (email,password)=>{
-        email = "abhi.admin"
-        const [userFound, setUserFound] = useState(false)
-        const user = null;
-        if(email.ensWith(".admin")){
-            const docs = getDocs(adminCollectionRef);
-            console.log(docs)
+import { studentCollectionRef } from "../firebase/firebaseConfig";
+
+class LoginService {
+  login = async (email, password) => {
+    // 1. Logic check
+    if (email.endsWith(".admin")) {
+      try {
+        // 2. Fetch the specific admin user
+        const q = query(
+          adminCollectionRef,
+          where("email", "==", email),
+          where("password", "==", password),
+        );
+        const querySnapshot = await getDocs(q);
+
+        if (!querySnapshot.empty) {
+          const userData = querySnapshot.docs[0].data();
+          // Perform password check here
+          return { success: true, user: userData };
         }
+      } catch (error) {
+        console.error("Login error:", error);
+      }
+    } else if (email.endsWith(".student")) {
+      try {
+        // Fetch the specific student user
+        const q = query(
+          studentCollectionRef,
+          where("email", "==", email),
+          where("password", "==", password),
+        );
+        const querySnapshot = await getDocs(q);
+
+        if (!querySnapshot.empty) {
+          const userData = querySnapshot.docs[0].data();
+          // Perform password check here
+          return { success: true, user: userData };
+        }
+      } catch (error) {
+        console.error("Login error:", error);
+      }
     }
+    return { success: false, message: "User not found" };
+  };
 }
 
-export default new LoginService()
+export default new LoginService();

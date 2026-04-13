@@ -2,11 +2,11 @@ import React from 'react'
 import { useState } from 'react'
 import loginService from '../services/LoginService'
 
-const login = () => {
+const DemoLogin = () => {
     const [email, setemail] = useState("")
     const [password, setpassword] = useState("")
   return (
-    <div>
+    <div className='bg-amber-200'>
       <input onChange={(e)=>{setemail(e.target.value)}} className='bg-black text-white p-2 rounded-2xl' type="password" name="" id="" placeholder='enter email'/>
       <input onChange={(e)=>{setpassword(e.target.value)}} className='bg-black text-white p-2 rounded-2xl' type="text" name="" id="" placeholder='enter password'/>
       <button onClick={loginService.login(email,password)} className='bg-teal-500 cursor-pointer'>SUBMIT</button>
@@ -14,4 +14,4 @@ const login = () => {
   )
 }
 
-export default login
+export default DemoLogin
