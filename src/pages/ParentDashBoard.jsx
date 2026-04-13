@@ -1,11 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import logo from '../assets/APS_LOGO.png'
+import React, { useState, useEffect } from "react";
+import logo from "../assets/APS_LOGO.png";
+import { useLocation } from "react-router-dom";
+import {
+  studentCollectionRef,
+  driverCollectionRef,
+} from "../firebase/firebaseConfig";
+import { query, where, getDocs } from "firebase/firestore";
+import { useAddReview } from "@dataconnect/generated/react";
 
 const ParentDashBoard = () => {
   const [location, setLocation] = useState({ lat: null, lng: null });
   const [error, setError] = useState(null);
+  const [driverInfo, setDriverInfo] = useState(null);
 
-  // Mock Driver Data
+  const loc = useLocation();
+  const studentDetails = loc.state?.user;
+
   const driverDetails = {
     name: "Kuldeep Yadav",
     id: "APS-D257",
@@ -13,39 +23,56 @@ const ParentDashBoard = () => {
     licensePlate: "JH-01-AH-2627",
     rating: "4.0 ⭐",
     status: "Active / On Duty",
-    phone:"9988799887"
+    phone: "9988799887",
   };
 
-  const studentDetails = {
-    name:"Basant Kumar",
-    id:"APS2025341",
-    class:"X A",
-    address:"Marang-Marcha Bagicha-Tola",
-    busId:"B-05"
+  const getDriverInfo = async () => {
+    try {
+      const q = query(
+        driverCollectionRef,
+        where("busId", "==", studentDetails.busId),
+      );
+
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
+        const userData = querySnapshot.docs[0].data();
+        setDriverInfo({ success: true, user: userData });
+        console.log(userData)
+      } else {
+        setDriverInfo({
+          success: false,
+          message: "Currently No Driver Found Contact Transport Office APS",
+        });
+      }
+    } catch (error) {
+      console.error("Error:", error);
+    }
   };
 
   useEffect(() => {
+    if (studentDetails) {
+      getDriverInfo();
+    }
+  }, [studentDetails]);
+
+  useEffect(() => {
     if (!navigator.geolocation) {
-      setError("Geolocation is not supported by your browser");
+      setError("Geolocation is not supported");
       return;
     }
 
-    const handleSuccess = (position) => {
-      setLocation({
-        lat: position.coords.latitude,
-        lng: position.coords.longitude,
-      });
-    };
-
-    const handleError = (err) => {
-      setError(`Error retrieving location: ${err.message}`);
-    };
-
-    const watchId = navigator.geolocation.watchPosition(handleSuccess, handleError, {
-      enableHighAccuracy: true,
-      timeout: 5000,
-      maximumAge: 0,
-    });
+    const watchId = navigator.geolocation.watchPosition(
+      (position) => {
+        setLocation({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        });
+      },
+      (err) => {
+        setError(err.message);
+      },
+    );
 
     return () => navigator.geolocation.clearWatch(watchId);
   }, []);
@@ -53,14 +80,11 @@ const ParentDashBoard = () => {
   return (
     <div className="min-h-screen bg-gray-100 p-4 md:p-8 font-sans">
       <div className="max-w-4xl mx-auto">
-        
-        {/* Header */}
         <header className="mb-8 text-center">
-            <img className="w-20 h-20 absolute left-10" src={logo} alt="logo" />
+          <img className="w-20 h-20 absolute left-10" src={logo} alt="logo" />
           <h1 className="text-3xl font-bold text-gray-800">Parent Dashboard</h1>
         </header>
 
-        {/* Map Section */}
         <div className="bg-white p-2 rounded-2xl shadow-lg mb-6 overflow-hidden">
           {location.lat && location.lng ? (
             <div className="relative h-80 w-full rounded-xl overflow-hidden">
@@ -68,90 +92,100 @@ const ParentDashBoard = () => {
                 title="Driver Location"
                 className="absolute inset-0 w-full h-full border-0"
                 src={`https://maps.google.com/maps?q=${location.lat},${location.lng}&z=15&output=embed`}
-                allowFullScreen
               ></iframe>
             </div>
           ) : (
-            <div className="h-80 w-full flex items-center justify-center bg-gray-200 rounded-xl">
-              {error ? (
-                <p className="text-red-500 font-medium">{error}</p>
-              ) : (
-                <div className="flex flex-col items-center gap-2">
-                  <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                  <p className="text-gray-600 animate-pulse">Fetching GPS coordinates...</p>
-                </div>
-              )}
+            <div className="h-80 flex items-center justify-center">
+              {error ? error : "Fetching GPS..."}
             </div>
           )}
         </div>
 
-        {/* Driver Details Card */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 md:p-8">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-gray-100 pb-6 mb-6 gap-4">
-            <div>
-              <h2 className="text-xl font-bold text-gray-800">Driver Profile</h2>
-              <p className="text-sm text-gray-400">Assigned Vehicle Information</p>
-            </div>
-            <span className="px-4 py-1 bg-green-100 text-green-700 text-sm font-semibold rounded-full border border-green-200">
-              {driverDetails.status}
-            </span>
-          </div>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            <InfoField label="Driver Name" value={driverDetails.name} />
-            <InfoField label="Driver ID" value={driverDetails.id} />
-            <InfoField label="Vehicle Model" value={driverDetails.vehicle} />
-            <InfoField label="License Plate" value={driverDetails.licensePlate} />
-            <InfoField label="Performance Rating" value={driverDetails.rating} />
-            <div className="flex flex-col">
-              <span className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">CONTACT</span>
-              <span className="text-sm font-mono text-blue-600">
-                {/* {location.lat ? `${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}` : "Waiting..."} */}
-                {driverDetails.phone}
+        {driverInfo && driverInfo.success ? (
+          // DRIVER INFORMATION CARD
+          <div className="bg-white rounded-2xl shadow-lg p-6 md:p-8">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-gray-100 pb-6 mb-6 gap-4">
+              <div>
+                <h2 className="text-xl font-bold text-gray-800">
+                  Driver Profile
+                </h2>
+                <p className="text-sm text-gray-400">
+                  Assigned Vehicle Information
+                </p>
+              </div>
+              <span className="px-4 py-1 bg-green-100 text-green-700 text-sm font-semibold rounded-full border border-green-200">
+                {driverDetails.status}
               </span>
             </div>
-          </div>
-        </div>
 
-
-        
-        {/* Student Card */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 md:p-8 mt-5">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-gray-100 pb-6 mb-6 gap-4">
-            <div>
-              <h2 className="text-xl font-bold text-gray-800">Student Profile</h2>
-              <p className="text-sm text-gray-400">Assigned Vehicle Information</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+              <InfoField label="Driver Name" value={driverInfo.user.name} />
+              <InfoField label="Driver ID" value={driverInfo.user.driverId} />
+              <InfoField label="Vehicle Model" value={driverInfo.user.vehicleModel} />
+              <InfoField
+                label="License Plate"
+                value={driverInfo.user.vehicleNumber}
+              />
+              <InfoField
+                label="Bus Id"
+                value={driverInfo.user.busId}
+              />
+              <div className="flex flex-col">
+                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">
+                  Current Location
+                </span>
+                <span className="text-sm font-mono text-blue-600">
+                  {location.lat
+                    ? `${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}`
+                    : "Waiting..."}
+                </span>
+              </div>
             </div>
           </div>
-          
+        ) : (
+          driverInfo && (
+            <div className="bg-white p-6 rounded-xl">{driverInfo.message}</div>
+          )
+        )}
+
+        {/* STUDENT INFORMATION CARD */}
+
+        <div className="bg-white rounded-2xl shadow-lg p-6 md:p-8 mt-8">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-gray-100 pb-6 mb-6 gap-4">
+            <div>
+              <h2 className="text-xl font-bold text-gray-800">
+                Student Profile
+              </h2>
+              <p className="text-sm text-gray-400">
+                Assigned Vehicle Information
+              </p>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             <InfoField label="Student Name" value={studentDetails.name} />
-            <InfoField label="Student ID" value={studentDetails.id} />
-            <InfoField label="CLASS" value={studentDetails.class} />
-            <InfoField label="BUS ID" value={studentDetails.busId} />
+            <InfoField label="Admission ID" value={studentDetails.admissionId} />
+            <InfoField label="Class" value={studentDetails.class} />
+            <InfoField label="Bus Id" value={studentDetails.busId} />
             <div className="flex flex-col">
-              <span className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">ADDRESS</span>
+              <span className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">
+                ADDRESS
+              </span>
               <span className="text-sm font-mono text-blue-600">
-                {/* {location.lat ? `${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}` : "Waiting..."} */}
                 {studentDetails.address}
               </span>
             </div>
           </div>
         </div>
-
-
-
-
       </div>
     </div>
   );
 };
 
-// Reusable Sub-component for clarity
 const InfoField = ({ label, value }) => (
-  <div className="flex flex-col">
-    <span className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">{label}</span>
-    <span className="text-lg font-semibold text-gray-700">{value}</span>
+  <div>
+    <p className="text-sm text-gray-400">{label}</p>
+    <p className="font-semibold">{value}</p>
   </div>
 );
 

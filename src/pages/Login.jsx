@@ -22,8 +22,15 @@ const Login = () => {
     if (response.success === false) {
       setShowAlert(true);
       setTimeout(() => setShowAlert(false), 1000);
+      return;
     } else {
-      nav("/adminDashBoard", { state: response });
+      if (response.user.loginInfo === "admin") {
+        nav("/adminDashBoard", { state: response });
+      } else if (response.user.loginInfo=== "student") {
+        nav("/parentDashBoard", { state: response });
+      } else {
+        nav("/driverDashBoard", { state: response });
+      }
     }
   };
 
