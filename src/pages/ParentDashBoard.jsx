@@ -2,15 +2,12 @@ import React, { useState, useEffect } from "react";
 import logo from "../assets/APS_LOGO.png";
 import { useLocation } from "react-router-dom";
 import {
-  studentCollectionRef,
   driverCollectionRef,
 } from "../firebase/firebaseConfig";
-import { query, where, getDocs } from "firebase/firestore";
-import { useAddReview } from "@dataconnect/generated/react";
+import { query, where, onSnapshot } from "firebase/firestore";
 
 const ParentDashBoard = () => {
   const [location, setLocation] = useState({ lat: null, lng: null });
-  const [error, setError] = useState(null);
   const [driverInfo, setDriverInfo] = useState(null);
 
   const loc = useLocation();
@@ -26,56 +23,34 @@ const ParentDashBoard = () => {
     phone: "9988799887",
   };
 
-  const getDriverInfo = async () => {
-    try {
-      const q = query(
-        driverCollectionRef,
-        where("busId", "==", studentDetails.busId),
-      );
+  useEffect(() => {
+    if (!studentDetails?.busId) return;
 
-      const querySnapshot = await getDocs(q);
+    const q = query(
+      driverCollectionRef,
+      where("busId", "==", studentDetails.busId)
+    );
 
-      if (!querySnapshot.empty) {
-        const userData = querySnapshot.docs[0].data();
-        setDriverInfo({ success: true, user: userData });
-        console.log(userData)
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      if (!snapshot.empty) {
+        const data = snapshot.docs[0].data();
+
+        setDriverInfo({ success: true, user: data });
+
+        setLocation({
+          lat: parseFloat(data.latitude),
+          lng: parseFloat(data.longitude),
+        });
       } else {
         setDriverInfo({
           success: false,
           message: "Currently No Driver Found Contact Transport Office APS",
         });
       }
-    } catch (error) {
-      console.error("Error:", error);
-    }
-  };
+    });
 
-  useEffect(() => {
-    if (studentDetails) {
-      getDriverInfo();
-    }
+    return () => unsubscribe();
   }, [studentDetails]);
-
-  useEffect(() => {
-    if (!navigator.geolocation) {
-      setError("Geolocation is not supported");
-      return;
-    }
-
-    const watchId = navigator.geolocation.watchPosition(
-      (position) => {
-        setLocation({
-          lat: position.coords.latitude,
-          lng: position.coords.longitude,
-        });
-      },
-      (err) => {
-        setError(err.message);
-      },
-    );
-
-    return () => navigator.geolocation.clearWatch(watchId);
-  }, []);
 
   return (
     <div className="min-h-screen bg-gray-100 p-4 md:p-8 font-sans">
@@ -96,13 +71,12 @@ const ParentDashBoard = () => {
             </div>
           ) : (
             <div className="h-80 flex items-center justify-center">
-              {error ? error : "Fetching GPS..."}
+              Fetching GPS...
             </div>
           )}
         </div>
 
         {driverInfo && driverInfo.success ? (
-          // DRIVER INFORMATION CARD
           <div className="bg-white rounded-2xl shadow-lg p-6 md:p-8">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-gray-100 pb-6 mb-6 gap-4">
               <div>
@@ -119,17 +93,14 @@ const ParentDashBoard = () => {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-              <InfoField label="Driver Name" value={driverInfo.user.name} />
-              <InfoField label="Driver ID" value={driverInfo.user.driverId} />
-              <InfoField label="Vehicle Model" value={driverInfo.user.vehicleModel} />
+              <InfoField label="Driver Name" value={driverInfo?.user?.name} />
+              <InfoField label="Driver ID" value={driverInfo?.user?.driverId} />
+              <InfoField label="Vehicle Model" value={driverInfo?.user?.vehicleModel} />
               <InfoField
                 label="License Plate"
-                value={driverInfo.user.vehicleNumber}
+                value={driverInfo?.user?.vehicleNumber}
               />
-              <InfoField
-                label="Bus Id"
-                value={driverInfo.user.busId}
-              />
+              <InfoField label="Bus Id" value={driverInfo?.user?.busId} />
               <div className="flex flex-col">
                 <span className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">
                   Current Location
@@ -144,11 +115,11 @@ const ParentDashBoard = () => {
           </div>
         ) : (
           driverInfo && (
-            <div className="bg-white p-6 rounded-xl">{driverInfo.message}</div>
+            <div className="bg-white p-6 rounded-xl">
+              {driverInfo.message}
+            </div>
           )
         )}
-
-        {/* STUDENT INFORMATION CARD */}
 
         <div className="bg-white rounded-2xl shadow-lg p-6 md:p-8 mt-8">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-gray-100 pb-6 mb-6 gap-4">
@@ -163,16 +134,16 @@ const ParentDashBoard = () => {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            <InfoField label="Student Name" value={studentDetails.name} />
-            <InfoField label="Admission ID" value={studentDetails.admissionId} />
-            <InfoField label="Class" value={studentDetails.class} />
-            <InfoField label="Bus Id" value={studentDetails.busId} />
+            <InfoField label="Student Name" value={studentDetails?.name} />
+            <InfoField label="Admission ID" value={studentDetails?.admissionId} />
+            <InfoField label="Class" value={studentDetails?.class} />
+            <InfoField label="Bus Id" value={studentDetails?.busId} />
             <div className="flex flex-col">
               <span className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">
                 ADDRESS
               </span>
               <span className="text-sm font-mono text-blue-600">
-                {studentDetails.address}
+                {studentDetails?.address}
               </span>
             </div>
           </div>

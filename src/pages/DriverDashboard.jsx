@@ -1,18 +1,43 @@
-import React, { useState, useEffect } from 'react';
-import logo from '../assets/APS_LOGO.png'
+import React, { useState, useEffect, useRef } from 'react';
+import logo from '../assets/APS_LOGO.png';
+import { useLocation } from 'react-router-dom';
+import { collection, query, where, getDocs, updateDoc } from "firebase/firestore";
+import { db } from "../firebase/firebaseConfig";
 
 const DriverDashboard = () => {
   const [location, setLocation] = useState({ lat: null, lng: null });
   const [error, setError] = useState(null);
 
-  // Mock Driver Data
-  const driverDetails = {
-    name: "Kuldeep Yadav",
-    id: "APS-D257",
-    vehicle: "TATA MAGIC",
-    licensePlate: "JH-01-AH-2627",
-    rating: "4.0 ★",
-    status: "Active / On Duty"
+  const loc = useLocation();
+  const driver = loc.state?.user;
+  const email = driver?.email;
+
+  const lastUpdateRef = useRef(0);
+
+  const updateDriverLocation = async (email, lat, lng) => {
+    try {
+      const q = query(
+        collection(db, "drivers"),
+        where("email", "==", email)
+      );
+
+      const snapshot = await getDocs(q);
+
+      if (!snapshot.empty) {
+        const docRef = snapshot.docs[0].ref;
+
+        await updateDoc(docRef, {
+          latitude: lat.toString(),
+          longitude: lng.toString(),
+        });
+
+        console.log("UPDATED:", lat, lng);
+      } else {
+        console.log("Driver not found");
+      }
+    } catch (err) {
+      console.log("ERROR:", err);
+    }
   };
 
   useEffect(() => {
@@ -21,37 +46,42 @@ const DriverDashboard = () => {
       return;
     }
 
-    const handleSuccess = (position) => {
-      setLocation({
-        lat: position.coords.latitude,
-        lng: position.coords.longitude,
-      });
-    };
+    const watchId = navigator.geolocation.watchPosition(
+      (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
 
-    const handleError = (err) => {
-      setError(`Error retrieving location: ${err.message}`);
-    };
+        setLocation({ lat, lng });
 
-    const watchId = navigator.geolocation.watchPosition(handleSuccess, handleError, {
-      enableHighAccuracy: true,
-      timeout: 5000,
-      maximumAge: 0,
-    });
+        const now = Date.now();
+
+        if (email && now - lastUpdateRef.current > 5000) {
+          lastUpdateRef.current = now;
+          updateDriverLocation(email, lat, lng);
+        }
+      },
+      (err) => {
+        setError(`Error retrieving location: ${err.message}`);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 5000,
+        maximumAge: 0,
+      }
+    );
 
     return () => navigator.geolocation.clearWatch(watchId);
-  }, []);
+  }, [email]);
 
   return (
     <div className="min-h-screen bg-gray-100 p-4 md:p-8 font-sans">
       <div className="max-w-4xl mx-auto">
         
-        {/* Header */}
         <header className="mb-8 text-center">
-            <img className="w-20 h-20 absolute left-10" src={logo} alt="logo" />
+          <img className="w-20 h-20 absolute left-10" src={logo} alt="logo" />
           <h1 className="text-3xl font-bold text-gray-800">Driver Dashboard</h1>
         </header>
 
-        {/* Map Section */}
         <div className="bg-white p-2 rounded-2xl shadow-lg mb-6 overflow-hidden">
           {location.lat && location.lng ? (
             <div className="relative h-80 w-full rounded-xl overflow-hidden">
@@ -76,7 +106,6 @@ const DriverDashboard = () => {
           )}
         </div>
 
-        {/* Driver Details Card */}
         <div className="bg-white rounded-2xl shadow-lg p-6 md:p-8">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-gray-100 pb-6 mb-6 gap-4">
             <div>
@@ -84,16 +113,16 @@ const DriverDashboard = () => {
               <p className="text-sm text-gray-400">Assigned Vehicle Information</p>
             </div>
             <span className="px-4 py-1 bg-green-100 text-green-700 text-sm font-semibold rounded-full border border-green-200">
-              {driverDetails.status}
+              Active / On Duty
             </span>
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            <InfoField label="Driver Name" value={driverDetails.name} />
-            <InfoField label="Driver ID" value={driverDetails.id} />
-            <InfoField label="Vehicle Model" value={driverDetails.vehicle} />
-            <InfoField label="License Plate" value={driverDetails.licensePlate} />
-            <InfoField label="Performance Rating" value={driverDetails.rating} />
+            <InfoField label="Driver Name" value={driver?.name} />
+            <InfoField label="Driver ID" value={driver?.driverId} />
+            <InfoField label="Vehicle Model" value={driver?.vehicleModel} />
+            <InfoField label="License Plate" value={driver?.vehicleNumber} />
+            <InfoField label="Route" value={driver?.route} />
             <div className="flex flex-col">
               <span className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Current Lat/Long</span>
               <span className="text-sm font-mono text-blue-600">
@@ -107,7 +136,6 @@ const DriverDashboard = () => {
   );
 };
 
-// Reusable Sub-component for clarity
 const InfoField = ({ label, value }) => (
   <div className="flex flex-col">
     <span className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">{label}</span>
