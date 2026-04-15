@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import logo from '../assets/APS_LOGO.png'
 import { useLocation } from "react-router-dom";
-import AddDriver from './AddDriver';
+import AddBus from './AddBus';
 
 const AdminDashboard = () => {
   // Demo Admin Info
@@ -58,7 +58,7 @@ const AdminDashboard = () => {
         );
       case 'add-bus':
         return (
-          <AddDriver/>
+          <AddBus/>
         )
       case 'remove-bus':
         return <div className="p-4 bg-red-50 border border-red-200 rounded text-red-700">Select a bus ID to decommission from the fleet.</div>;

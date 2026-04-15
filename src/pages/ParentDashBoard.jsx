@@ -1,37 +1,53 @@
 import React, { useState, useEffect } from "react";
 import logo from "../assets/APS_LOGO.png";
 import { useLocation } from "react-router-dom";
-import {
-  driverCollectionRef,
-} from "../firebase/firebaseConfig";
-import { query, where, onSnapshot } from "firebase/firestore";
+import { db, driverCollectionRef } from "../firebase/firebaseConfig";
+import { query, where, onSnapshot, collection } from "firebase/firestore";
 
 const ParentDashBoard = () => {
   const [location, setLocation] = useState({ lat: null, lng: null });
   const [driverInfo, setDriverInfo] = useState(null);
-
+  const [busInfo, setBusInfo] = useState(null);
+  const [currentAddressOfBus, setCurrentAddressOfBus] = useState("");
   const loc = useLocation();
   const studentDetails = loc.state?.user;
 
   const driverDetails = {
-    name: "Kuldeep Yadav",
-    id: "APS-D257",
-    vehicle: "TATA MAGIC",
-    licensePlate: "JH-01-AH-2627",
-    rating: "4.0 ⭐",
     status: "Active / On Duty",
-    phone: "9988799887",
+  };
+
+  // free api to get address w.r.t co-ordinates
+  const getAddress = async (lat, lng) => {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`,
+    );
+    const data = await res.json();
+    return data.display_name;
   };
 
   useEffect(() => {
     if (!studentDetails?.busId) return;
 
-    const q = query(
-      driverCollectionRef,
-      where("busId", "==", studentDetails.busId)
+    // 🔹 BUS DATA
+    const busQuery = query(
+      collection(db, "buses"),
+      where("busId", "==", studentDetails.busId),
     );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
+    const unsubscribe1 = onSnapshot(busQuery, (snapshot) => {
+      if (!snapshot.empty) {
+        setBusInfo(snapshot.docs[0].data());
+        // console.log("BUS INFO = ", busInfo);
+      }
+    });
+
+    //  DRIVER DATA (location + driver info)
+    const driverQuery = query(
+      driverCollectionRef,
+      where("busId", "==", studentDetails.busId),
+    );
+
+    const unsubscribe2 = onSnapshot(driverQuery, async (snapshot) => {
       if (!snapshot.empty) {
         const data = snapshot.docs[0].data();
 
@@ -41,6 +57,9 @@ const ParentDashBoard = () => {
           lat: parseFloat(data.latitude),
           lng: parseFloat(data.longitude),
         });
+
+        const addr = await getAddress(data.latitude, data.longitude);
+        setCurrentAddressOfBus(addr);
       } else {
         setDriverInfo({
           success: false,
@@ -49,7 +68,10 @@ const ParentDashBoard = () => {
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribe1();
+      unsubscribe2();
+    };
   }, [studentDetails]);
 
   return (
@@ -93,31 +115,27 @@ const ParentDashBoard = () => {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-              <InfoField label="Driver Name" value={driverInfo?.user?.name} />
-              <InfoField label="Driver ID" value={driverInfo?.user?.driverId} />
-              <InfoField label="Vehicle Model" value={driverInfo?.user?.vehicleModel} />
-              <InfoField
-                label="License Plate"
-                value={driverInfo?.user?.vehicleNumber}
-              />
-              <InfoField label="Bus Id" value={driverInfo?.user?.busId} />
+              <InfoField label="Driver Name" value={busInfo.driverName} />
+              <InfoField label="Driver ID" value={busInfo.driverId} />
+              <InfoField label="Vehicle Model" value={busInfo.vehicleModel} />
+
+              <InfoField label="License Plate" value={busInfo.vehicleNumber} />
+              <InfoField label="Bus Id" value={busInfo.busId} />
+              <InfoField label="Route" value={busInfo?.route} />
+
               <div className="flex flex-col">
                 <span className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">
                   Current Location
                 </span>
                 <span className="text-sm font-mono text-blue-600">
-                  {location.lat
-                    ? `${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}`
-                    : "Waiting..."}
+                  {location.lat ? `${currentAddressOfBus}` : "Waiting..."}
                 </span>
               </div>
             </div>
           </div>
         ) : (
           driverInfo && (
-            <div className="bg-white p-6 rounded-xl">
-              {driverInfo.message}
-            </div>
+            <div className="bg-white p-6 rounded-xl">{driverInfo.message}</div>
           )
         )}
 
@@ -135,7 +153,10 @@ const ParentDashBoard = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             <InfoField label="Student Name" value={studentDetails?.name} />
-            <InfoField label="Admission ID" value={studentDetails?.admissionId} />
+            <InfoField
+              label="Admission ID"
+              value={studentDetails?.admissionId}
+            />
             <InfoField label="Class" value={studentDetails?.class} />
             <InfoField label="Bus Id" value={studentDetails?.busId} />
             <div className="flex flex-col">

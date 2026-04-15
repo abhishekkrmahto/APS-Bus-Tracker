@@ -28,6 +28,7 @@ export const adminCollectionRef = collection(db,"admin")
 export const studentCollectionRef = collection(db,"students")
 export const driverCollectionRef = collection(db,"drivers")
 export const driverPaymentCollectionRef = collection(db,"driverPayment")
+export const busCollectionRef = collection(db,"buses")
 
 
 
